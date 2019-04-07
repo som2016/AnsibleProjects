@@ -1,0 +1,42 @@
+# INstall Httpd if not installed 
+--- 
+- hosts: localhost
+  tasks:
+  - name: "Determine if the HTTPD is installed"
+    shell: systemctl status httpd
+    ignore_errors: yes
+    register: validatehttpd
+    
+  - debug:
+      var: validatehttpd
+      verbosity: 1
+       
+  - name: Activate apache which is present but not activated
+    service:
+       name: httpd
+       state: started
+       enabled: yes
+    when: validatehttpd.rc == 3
+   
+  - name: Apache Up and Running
+    debug:
+      msg: Apache Up and Running
+    when: validatehttpd.rc == 0  
+     
+  - name: Apache is absent
+    yum:
+       name: httpd
+       state: latest
+       update_cache: true
+    notify: restart httpd
+    when: validatehttpd.rc == 4
+     
+  handlers:
+  - name: restart httpd
+    service:
+     name: httpd
+     state: restarted
+     enabled: yes
+ 
+
+

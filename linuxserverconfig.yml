@@ -1,0 +1,129 @@
+# require ansible vault and error handling checks
+---
+- hosts: ansibleslave
+  become: true
+  vars:
+    domain_ip_address: 192.168.48.131
+    domain_name: homelocal.org
+    hostname_of_linux: slave1
+    fully_qualified_name: somarko.das@homelocal.org homelocal.org
+    domain_computer_name: windc
+    resolv_src_path: /etc/resolv.conf
+    resolv_dest_path: /etc/resolv.conf.bkp
+    remote_password: Windows1
+
+    
+  tasks:
+  - name: change in hostname
+    shell: "{{ item }}"
+    with_items:
+     - cp /etc/hosts hosts.bkp
+     - echo "{{ domain_ip_address }} {{ domain_name }}" >> /etc/hosts
+     - hostnamectl set-hostname {{ hostname_of_linux }}
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+ 
+  - name: check if domain is pinging
+    command: ping -c1 {{ inventory_hostname }}
+    delegate_to: localhost
+    register: domain_ping_result
+    ignore_errors: yes 
+
+  - name: Install related tools
+    yum: name={{item}} state=latest
+    with_items:
+      - sssd
+      - realmd
+      - oddjob 
+      - oddjob-mkhomedir
+      - adcli
+      - samba-common
+      - samba-common-tools
+      - krb5-workstation
+      - openldap-clients
+      - policycoreutils-python
+      - ntpdate
+      - ntp
+      
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' and domain_ping_result|success  
+  
+  - name: enable and start service
+    systemd:
+     name: ntpd.service
+     enabled: yes
+     state: started
+#    shell: hwclock --systohc   
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' and domain_ping_result|success
+    
+  - name: taking Backup of ntp.conf
+    copy:
+      src: /etc/ntp.conf
+      dest: /etc/ntp.conf.bkp
+    delegate_to: "{{ inventory_hostname }}"
+    
+  - name: configuring ntp server in linux VM
+    copy:
+      src: /etc/ntp.conf
+      dest: /etc/ntp.conf
+    ignore_errors: yes
+    notify: start_ntp_config
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' and domain_ping_result|success
+  
+  - name: Adding entry to relove_conf File
+    command: mv /etc/resolv.conf /etc/resolv.conf.bkp
+#    copy: src={{ resolv_src_path }} dest={{ resolv_dest_path }}
+    notify: edit_resov_conf
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' and domain_ping_result|success
+  
+  - name: force all notified handlers to run at this point, not waiting for normal sync points
+    meta: flush_handlers
+ 
+  - name: get realm result at first
+    shell: realm list
+    register: realm_result_first
+    failed_when: realm_result_first.stdout.find('login-formats') != -1
+   
+  
+  - name: Joining with Windows DC example_somarko.das@homelocal.org homelocal.org
+    shell: |
+     set timeout 300
+     spawn realm join --user={{ fully_qualified_name }}
+     expect "Password for"
+     send "{{ remote_password }}\n"
+     interact
+     exit 0
+    args:
+     executable: /usr/bin/expect
+#    delegate_to: localhost
+
+#    ignore_errors: yes
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' and domain_ping_result|success
+    
+  - name: get realmd result after join
+    shell: realm list
+    register: realm_result
+  
+  - name: Check realm result
+    set_fact:
+     realm_check: true
+    when: realm_result.rc == 0
+    
+  - name: Sucessful message
+    debug:
+     msg: join sucessful
+    when: realm_check is defined 
+  
+  - name: exit if join unsucessful
+    fail:
+     msg: join unsucessful
+    when: realm_check is not defined  
+    
+  handlers:
+   - name: start_ntp_config
+     shell: ntpdate asia.pool.ntp.org
+   - name: edit_resov_conf   
+     shell: echo "search {{ domain_name }}" >> /etc/resolv.conf; echo; echo "nameserver {{ domain_ip_address }}" >> {{ resolv_src_path }}   
+    
+   
+   
+   
+    

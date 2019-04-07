@@ -1,0 +1,34 @@
+---
+- hosts: localhost
+  gather_facts: no
+  any_errors_fatal: true
+#  serial: 1
+  vars:
+   fault_exists: false
+     
+  tasks:
+   - name: ping-pong check
+     shell: ansible -m ping all
+     delegate_to: localhost
+     ignore_errors: yes
+     register: ping_result
+    
+   - name: var print
+     debug:
+       var: ping_result|failed
+       verbosity: 1
+   
+   - set_fact:
+      fault_exists: true
+     when: ping_result|failed
+
+   
+   - name: quit plabook if failed
+     fail:
+       msg: failed to ping hence quit
+     when: fault_exists 
+     
+   - debug:
+       msg: working
+     when: not fault_exists
+  
