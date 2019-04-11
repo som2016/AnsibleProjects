@@ -1,6 +1,6 @@
 # INstall Httpd if not installed 
 --- 
-- hosts: localhost
+- hosts: ansibleslave
   tasks:
   - name: "Determine if the HTTPD is installed"
     shell: systemctl status httpd
