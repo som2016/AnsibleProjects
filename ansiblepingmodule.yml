@@ -1,14 +1,14 @@
 ---
-- hosts: all
-  gather_facts: no
-  any_errors_fatal: true
+- hosts: localhost
+#  gather_facts: no
+#  any_errors_fatal: true
 #  serial: 1
   vars:
    fault_exists: false
      
   tasks:
    - name: ping-pong check
-     shell: ansible -m ping all
+     ping:
      delegate_to: localhost
      ignore_errors: yes
      register: ping_result
