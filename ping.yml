@@ -1,8 +1,7 @@
 #Ping Servers
 ---
 - hosts: all
-  become: yes
-  become_user: root
+  
 #  gather_facts: no
 
 #  any_errors_fatal: true
@@ -14,8 +13,6 @@
    - name: ping all ip
      raw: ping -w 3 {{ inventory_hostname }}
      delegate_to: localhost
-     become: yes
-     become_user: root
      ignore_errors: yes
      register: ping_status
     
