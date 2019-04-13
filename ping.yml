@@ -1,0 +1,35 @@
+#Ping Servers
+---
+- hosts: all
+  gather_facts: no
+  any_errors_fatal: true
+#  serial: 1
+  vars:
+   fault_exists: false
+     
+  tasks:
+   - name: ping all ip
+     command: ping -c 4 {{ inventory_hostname }}
+     delegate_to: localhost
+     ignore_errors: yes
+     register: ping_status
+    
+   - name: var print
+     debug:
+       var: ping_status|failed
+       verbosity: 1
+   
+   - set_fact:
+      fault_exists: true
+     when: ping_status|failed
+
+   
+   - name: quit plabook if failed
+     fail:
+       msg: failed to ping {{ inventory_hostname }} hence quit
+     when: fault_exists 
+     
+   - debug:
+       msg: working
+     when: not fault_exists
+  
