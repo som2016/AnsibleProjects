@@ -12,14 +12,16 @@
   tasks:
    - name: ping all ip
      raw: ping -w 3 {{ inventory_hostname }}
+     raw: whoami
      delegate_to: localhost
+     become: yes
      ignore_errors: yes
      register: ping_status
     
    - name: var print
      debug:
-       var: ping_status|failed
-       verbosity: 1
+       var: ping_status
+       verbosity: 3
    
    - set_fact:
       fault_exists: true
