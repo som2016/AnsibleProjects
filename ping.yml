@@ -11,7 +11,7 @@
      
   tasks:
    - name: ping all ip
-     command: ping -w 3 {{ inventory_hostname }}
+     shell: ping -w 3 {{ inventory_hostname }}
      become_user: root
      delegate_to: localhost
      ignore_errors: yes
