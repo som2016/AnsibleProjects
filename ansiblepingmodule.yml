@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
+- hosts: all
   gather_facts: no
   any_errors_fatal: true
 #  serial: 1
