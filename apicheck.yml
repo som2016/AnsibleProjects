@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  vars:
+   repolist: []
+   repoid: []
+  tasks:
+  - name: rest call
+    uri: 
+     url: https://api.github.com/users/som2016/repos
+     method: GET
+     user: som2016
+     password: Idea&1234
+     force_basic_auth: yes
+     return_content: no
+     validate_certs: no
+    register: login
+   
+  - name: set list of Repositories
+    set_fact:
+     repolist: "{{ repolist }} + [ '{{ item.full_name }}' ]"
+    with_items:  "{{ login.json }}"
+  
+  - name: repo id sort
+    set_fact:
+     repoid: "{{ repoid }} + [ '{{ item.id }}' ]"
+    with_items:  "{{ login.json }}"
+  
+  - name: repo + repo_id
+    set_fact:
+      total: "{{ total|default([])|union([{item.0 : item.1}]) }}"
+    with_together:
+    - "{{repolist}}"
+    - "{{repoid}}" 
+     
+
+  - name: show the list of repositories of a Public user
+    debug:
+#     var: repolist
+#     var: repoid
+     var: total
