@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  tasks:
+  - name: show external vars dynamically
+    debug:
+      var: show_var

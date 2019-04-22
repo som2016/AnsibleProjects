@@ -1,0 +1,21 @@
+---
+- hosts: localhost
+  tasks:
+  - name: API to create a Github repository
+    uri:
+     url: https://api.github.com/user/repos
+     user: som2016
+     password: Idea&1234
+     method: POST
+     HEADER_Content-Type: application/json
+     body_format: json
+     body:
+         name: testrepo1
+         description: Testing repo1
+         homepage: https://github.com
+#         private: false,
+         has_wiki: true
+     status_code: 201
+     force_basic_auth: yes
+     validate_certs: False	 
+    register: login
