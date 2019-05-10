@@ -1,0 +1,4 @@
+- set_fact:
+   zone: "{{ inventory_hostname }}"
+- debug:
+   var: zone

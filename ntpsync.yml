@@ -1,0 +1,21 @@
+---
+- hosts: ansibleslave
+  gather_facts: yes
+  tasks:
+  - name: get ntp sync status and
+    shell: ntpstat
+    ignore_errors: yes
+    register: ntp_sync_status
+    
+  - name: Check ntp sync status and run the task-playbook if unsyncronised
+    set_fact:
+     sync: true
+    when: ntp_sync_status.stdout.find('synchronised') != -1
+
+  - name: import tasks when unsync found
+    import_tasks: sync.yml
+    when: sync is defined
+    
+    
+  - debug:
+     var: ntp_sync_status
