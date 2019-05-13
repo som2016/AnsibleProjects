@@ -1,4 +1,11 @@
-- set_fact:
-   zone: "{{ inventory_hostname }}"
+- name: Get Which Zones the ip_address belongs to
+  shell: timedatectl
+  register: zone_check
+  delegate_to: "{{ inventory_hostname }}"
+
 - debug:
-   var: zone
+   var: zone_check
+
+- name: run the task if it is in India Zone
+  shell: hostnamectl
+  when: zone_check.stdout.find('Asia/Kolkata') != -1
