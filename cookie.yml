@@ -1,0 +1,20 @@
+ - name: API to create a Github repository
+   uri:
+     url: https://api.github.com/user/repos
+#     user: som2016
+#     password: Idea&1234
+     method: POST
+     HEADER_Content-Type: application/json
+     body_format: json
+     body:
+         name: testrepo2
+         description: Testing repo2
+         homepage: https://github.com
+#         private: false,
+         has_wiki: true
+     status_code: 201
+     force_basic_auth: yes
+     validate_certs: False
+     headers:
+      Cookie: "{{ login.cookies }}" 
+   register: login2

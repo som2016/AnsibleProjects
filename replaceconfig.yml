@@ -1,0 +1,43 @@
+---
+- hosts: localhost
+  vars:
+   pos: 2
+  tasks:
+  - name: uri module
+    uri:
+      url: https://lamp.local/api/v2/config/
+      user: root
+      password: redhat
+      method: GET
+      force_basic_auth: yes
+      body_format: json
+      validate_certs: False
+      return_content: no
+    register: output
+
+  - name: Filtering whats required
+    set_fact:
+      filter_original: "{{ output.json.license_info.subscription_name }}"
+
+  - debug:
+      var: filter_original
+
+  - name: Splitting the string
+    set_fact: 
+     array: "{{ filter_original.split() }}"
+  
+  - debug:
+     var: array
+  
+  - name: remove a element from a list
+    set_fact:
+     new_array: "{{ array | reject('search','hat') | list }}" 
+
+  - debug:
+      var: new_array | type_debug
+
+  - name: indexed loop demo
+    debug:
+      msg: "at array position {{ item.0 }} there is a value {{ item.1 }}"
+    with_indexed_items:
+    - "{{ array }}"
