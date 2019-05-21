@@ -3,6 +3,8 @@
   vars:
    array2: []
    sum: Red
+   word: hdfs12
+   appendlast: yarn/nm
   tasks:
   - name: uri module
     uri:
@@ -15,6 +17,11 @@
       validate_certs: False
       return_content: no
     register: output
+
+  - name: append a string
+    set_fact:
+     new_word: "/{{ word }}/{{ appendlast }}"
+  - debug: var=new_word
 
   - name: Filtering whats required
     set_fact:
@@ -41,5 +48,9 @@
         array: "{{ array | difference(array2) }}"
 
   - debug: var=array
+
+
+
+  
    
  
