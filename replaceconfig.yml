@@ -1,7 +1,8 @@
 ---
 - hosts: localhost
   vars:
-   pos: 2
+   array2: []
+   sum: Red
   tasks:
   - name: uri module
     uri:
@@ -28,16 +29,17 @@
   
   - debug:
      var: array
-  
-  - name: remove a element from a list
+   
+  - name: set list of Repositories
     set_fact:
-     new_array: "{{ array | reject('search','hat') | list }}" 
-
+     array2: "{{ array2 }} + [ '{{ sum }}' ]"
+  
   - debug:
-      var: new_array | type_debug
+     var: array2
 
-  - name: indexed loop demo
-    debug:
-      msg: "at array position {{ item.0 }} there is a value {{ item.1 }}"
-    with_indexed_items:
-    - "{{ array }}"
+  - set_fact:
+        array: "{{ array | difference(array2) }}"
+
+  - debug: var=array
+   
+ 
