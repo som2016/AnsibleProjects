@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  tasks:
+  - name: asd
+    debug:
+      msg: "checking if it works"
+
