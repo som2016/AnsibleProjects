@@ -1,0 +1,29 @@
+- name: Get data
+  uri:
+   url: xxxx
+   dest: repair_disk_yarn/files/hosts.json
+   force_basic_auth:
+   validate_certs: False
+   method: GET
+   headers:
+      Cookie: "{{ login.set_cookie }}"
+  register: role_details2
+
+- debug:
+   var: role_details2
+
+- set_fact:
+    result_list: "{{ item.value }}"
+  with_dict: "{{ role_details2.json }}"
+
+
+- set_fact:
+   value1: "{{ item.name }}"
+  with_items: "{{ result_list }}"
+  when:
+  -  item.hostRef.hostId == host_id
+  -  "{{'NODEMANAGER' in item.type }}"
+
+- debug:
+   var: value1
+

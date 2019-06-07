@@ -1,0 +1,35 @@
+- name: Get data
+  uri:
+   url: xxxx
+   dest: repair_disk_yarn/files/hosts.json
+   force_basic_auth:
+   validate_certs: False
+   method: GET
+   headers:
+      Cookie: "{{ login.set_cookie }}"
+  register: role_details
+
+- set_fact:
+   jsonvar: "{{ lookup('file', 'repair_disk_yarn/files/hosts.json') | from_json }}"
+
+- set_fact:
+   value: yarn-NODEMANAGER-BASE
+
+# When there is 'items' mentioned in json and you want to parse it in ansible Like jsonvar.items here we should 1st convert it to  wit_dict then use with_items
+- set_fact:
+    result_list: "{{ item.value }}"
+  with_dict: "{{ jsonvar }}"
+
+- set_fact:
+   value1: "{{ item.name }}"
+   variable1: "{{ item.roleConfigGroupRef.roleConfigGroupName  }}"
+#  msg: "{{ result_list }}"
+  with_items: "{{ result_list }}"
+  when:
+  -  item.hostRef.hostId == host_id
+  -  "{{'yarn-NODEMANAGER-BASE' in item.roleConfigGroupRef.roleConfigGroupName }}"
+
+- debug:
+    var: value1
+
+                             
