@@ -1,4 +1,4 @@
-- hosts: slave1
+- hosts: {{ host }}
   tasks:
   - name: Scan for devices Optional
     shell: echo "- - -" > /sys/class/scsi_host/host{{ item }}/scan
