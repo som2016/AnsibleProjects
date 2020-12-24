@@ -1,0 +1,39 @@
+- hosts: slave1
+  tasks:
+  - name: Scan for devices Optional
+    shell: echo "- - -" > /sys/class/scsi_host/host{{ item }}/scan
+    with_items:
+    - [0,1,2,3]
+    ignore_errors: yes
+    
+  - name: Pv Create
+    shell: pvcreate {{ pv }}
+  
+  - name: Extend VG
+    shell: vgextend {{ vg }} {{ pv }}
+     
+  - name: check for Filesystem Type
+    shell: df -Th /dev/mapper/{{ vg }}-{{ data }}
+    register: output
+    
+  - name: Find the Filesystem Type
+    set_fact:
+      ext4v: true
+    when: '"ext4" in output.stdout'
+    
+  - name: Extend LV
+    community.general.lvol:
+      vg: "{{ vg }}"
+      lv: "{{ lv }}"
+      size: +100%FREE
+      
+  - name: Format the File System xfs
+    shell: xfs_growfs /dev/mapper/{{ vg }}-{{ data }}
+    when: not ext4v
+    
+  - name: Format the File System ext4
+    shell: resize2fs /dev/mapper/{{ vg }}-{{ lv }}
+    when: ext4v
+    tags:
+      ext4
+      
