@@ -1,0 +1,55 @@
+- hosts: "{{ host }}"
+  gather_facts: yes
+  tasks:
+  - name: Scan for devices Optional
+    shell: echo "- - -" > /sys/class/scsi_host/host{{ item }}/scan
+    with_items:
+    - [0,1,2,3]
+    ignore_errors: yes
+     
+  - name: break the input
+    set_fact:
+     fs: "{{ path | basename }}"
+  - debug:
+     var: fs
+     
+  - name: Get VG and LV
+    set_fact:
+     vglv: "{{ vglv|default([]) }} + {{ fs.split('-') }}"
+     
+  - debug:
+      var: vglv[0]
+    
+  - name: Pv Create
+    shell: pvcreate {{ pv1 }}
+  
+  - name: Extend VG
+    shell: vgextend {{ vglv[0] }} {{ pv1 }}
+     
+  - name: check for Filesystem Type
+    shell: df -Th /dev/mapper/{{ vglv[0] }}-{{ vglv[1] }}
+    register: output
+    
+  - name: Find the Filesystem Type
+    set_fact:
+      ext4v: true
+    when: '"ext4" in output.stdout'
+    
+  - name: Extend LV
+    lvol:
+      vg: "{{ vglv[0] }}"
+      lv: "{{ vglv[1] }}"
+      size: 100%PVS
+#need to add handlers for below  and  create a role     
+  - name: Format the File System xfs
+    shell: xfs_growfs /dev/mapper/{{ vglv[0] }}-{{ vglv[1] }}
+    when: not ext4v
+    
+  - name: Format the File System ext4
+    shell: resize2fs /dev/mapper/{{ vglv[0] }}-{{ vglv[1] }}
+    when: ext4v
+    tags:
+      ext4
+      
+#ansible-playbook --extra-vars "path=/dev/mapper/vg13-data pv=/dev/sdh" lvm.yml -vvv
+      
