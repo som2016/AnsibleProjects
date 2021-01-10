@@ -1,0 +1,58 @@
+- hosts: "{{ host }}"
+  tasks:
+  - name: Check 1st time for space issue
+    block:
+    - name: find the current status
+      assert:
+         that:
+          - item.size_available > item.size_total|float * 0.5
+         fail_msg: "Disk space has has more than 50% threshold"
+         success_msg: "all ok"
+      when: item.mount == "/boot"
+      with_items: "{{ ansible_mounts }}"
+    
+    - name: endplay
+      meta: end_play
+
+    rescue:
+    - name: find old files older than 2 days
+      find:
+        paths: /var/log
+        age: 2d
+      register: oldfiles
+      
+    - name: verify the files
+      debug:
+       msg: "{{ item['path'] }}"
+      with_items: "{{ oldfiles['files'] }}"
+
+    - name: Just for test purpose
+      file:
+        src: "{{ item['path'] }}"
+        dest: /home/user1/Templates
+        state: hard
+        modification_time: preserve
+      with_items: "{{ oldfiles['files'] }}"
+      tags:
+      - test_purpose
+      ignore_errors: yes
+      
+  - name: Check 2nd time for space issue
+    block:
+    - name: Find th current status
+      assert:
+         that:
+          - item.size_available > item.size_total|float * 0.5
+         fail_msg: "Disk space has has more than 50% threshold"
+         success_msg: "all ok"
+      when: item.mount == "/ora/data"
+      with_items: "{{ ansible_mounts }}"
+      
+    rescue:
+    - name: Use Log Rotate Method
+ #     shell: logrotate -vf /etc/logrotate.conf
+      shell: uptime
+    
+    - name: Clean repos
+      shell: yum clean all
+    
